@@ -20,7 +20,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
   if m.author.bot: return
   if m.content.startsWith(".m "):
 
-    let query = m.content.split()[1].toLower()
+    let query = m.content.split()[^1].toLower()
     echo "queried " & query & " by " & m.author.username
     var prospect: Stats
     var embed: Embed
