@@ -32,13 +32,25 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       debugEcho query & " not found in cache, getting uuid"
       let uuid = await client.getUuid(query)
       if uuid.isNone():
-        discard await bot.api.sendMessage(m.channel_id, embed=some(notFoundEmbed()))
+        discard await bot.api.sendMessage(m.channel_id, embed=some(
+          errorEmbed(
+            "Player does not exist",
+            "You might have made a typo."
+            )
+          )
+        )
         return
       
       debugEcho "getting stats of " & query
       let stats = await client.getStats(uuid.get())
       if stats.isNone():
-        discard await bot.api.sendMessage(m.channel_id, embed=some(notFoundEmbed()))
+        discard await bot.api.sendMessage(m.channel_id, embed=some(
+          errorEmbed(
+            "Player has never been on Hypixel",
+            "You might have made a typo."
+            )
+          )
+        )
         return
       prospect = stats.get()
       debugEcho "storing " & query & " in cache"
