@@ -68,6 +68,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
             )
           )
         )
+        return
       if stats.isNone():
         discard await bot.api.sendMessage(m.channel_id, embed=some(
           errorEmbed(
