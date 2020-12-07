@@ -1,16 +1,16 @@
-import dimscord, asyncdispatch, strutils, options, httpclient, tables, times
+import dimscord, asyncdispatch, strutils, options, httpclient, tables, times, math
 import minmin/[apicalls, utils, prospect]
 
 const token {.strdefine.}: string = ""
-when token == "":
-  {.fatal: "Please supply your Discord bot token with -d:token=\"<token>\" when compiling.".}
+if token == "":
+  quit("Please supply your Discord bot token with -d:token=\"<token>\" when compiling.", QuitFailure)
 
 var bot = newDiscordClient(token)
 
 var client = newAsyncHttpClient()
 
 var
-  cache = initTable[string, Stats]()
+  cache = initTable[string, Prospect]()
   last_cache_init = now()
 
 bot.events.on_ready = proc (s: Shard, r: Ready) {.async.} =
@@ -19,10 +19,13 @@ bot.events.on_ready = proc (s: Shard, r: Ready) {.async.} =
 bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
   if m.author.bot: return
   if m.content.startsWith(".m "):
+    var botmsg = await bot.api.sendMessage(m.channel_id, "Working on it...")
 
     let query = m.content.split()[^1].toLower()
     echo "queried " & query & " by " & m.author.username
-    var prospect: Stats
+    var prospect: Prospect
+    prospect.exists = true
+    prospect.hypixel = true
     var embed: Embed
 
     if cache.hasKey(query):
@@ -34,7 +37,11 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       try:
         uuid = await client.getUuid(query)
       except:
-        discard await bot.api.sendMessage(m.channel_id, embed=some(
+        let
+          e = getCurrentException()
+          msg = getCurrentExceptionMsg()
+        echo "/!\\ got exception ", repr(e), " with message ", msg
+        discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
           errorEmbed(
             "Something went wrong",
             "Try again later."
@@ -43,73 +50,87 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
         )
         return
       if uuid.isNone():
-        discard await bot.api.sendMessage(m.channel_id, embed=some(
-          errorEmbed(
-            "Player does not exist",
-            "You might have made a typo."
+        prospect.exists = false
+
+      if prospect.exists:
+        echo "getting stats of " & query
+        var stats: Option[Prospect]
+        try:
+          stats = await client.getProspect(uuid.get())
+        except:
+          let
+            e = getCurrentException()
+            msg = getCurrentExceptionMsg()
+          echo "/!\\ got exception ", repr(e), " with message ", msg
+          discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
+            errorEmbed(
+              "Something went wrong",
+              "Try again later."
+              )
             )
           )
-        )
-        return
-      
-      echo "getting stats of " & query
-      var stats: Option[Stats]
-      try:
-        stats = await client.getStats(uuid.get())
-      except:
-        let
-          e = getCurrentException()
-          msg = getCurrentExceptionMsg()
-        echo "/!\\ got exception ", repr(e), " with message ", msg
-        discard await bot.api.sendMessage(m.channel_id, embed=some(
-          errorEmbed(
-            "Something went wrong",
-            "Try again later."
-            )
-          )
-        )
-        return
-      if stats.isNone():
-        discard await bot.api.sendMessage(m.channel_id, embed=some(
-          errorEmbed(
-            "Player has never been on Hypixel",
-            "You might have made a typo."
-            )
-          )
-        )
-        return
-      prospect = stats.get()
+          return
+        if stats.isNone():
+          prospect.hypixel = false
+        else:
+          prospect = stats.get()
       echo "storing " & query & " in cache"
       cache[query] = prospect
 
-    let qualifies = prospect.meetsAll()
-    embed.title = some(prospect.displayname & " " & qualifies.boolToEmoji())
-    embed.color = some(qualifies.boolToColor())
-    embed.fields = some(
-      @[
+    echo "sending results for " & query
+    if not prospect.exists:
+      discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
+        errorEmbed(
+          "Player does not exist",
+          "You might have made a typo."
+          )
+        )
+      )
+      return
+    elif not prospect.hypixel:
+      discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
+        errorEmbed(
+          "Player has never been on Hypixel",
+          "You might have made a typo."
+          )
+        )
+      )
+      return
+    else:
+      let qualifies = prospect.meetsAll()
+      embed.title = some(qualifies.boolToEmoji() & " - " & prospect.displayname)
+      embed.color = some(qualifies.boolToColor())
+      var fields = @[
         EmbedField(
           name: "Network Level",
-          value: prospect.meetsNetwork().boolToEmoji()
+          value: prospect.meetsNetwork().boolToEmoji() & " - " & $round(prospect.network_level, 2) & ":earth_asia:"
         ),
         EmbedField(
           name: "Skywars",
-          value: prospect.meetsSkywars().boolToEmoji()
+          value: prospect.meetsSkywars().boolToEmoji() & " - " & $prospect.skywars.star & ":star: " & $round(prospect.skywars.kdr, 2) & ":crossed_swords:"
         ),
         EmbedField(
           name: "Bedwars",
-          value: prospect.meetsBedwars().boolToEmoji()
+          value: prospect.meetsBedwars().boolToEmoji() & " - " & $prospect.bedwars.star & ":star: " & $round(prospect.bedwars.fkdr, 2) & ":crossed_swords:"
         ),
         EmbedField(
           name: "Duels",
-          value: prospect.meetsDuels().boolToEmoji()
+          value: prospect.meetsDuels().boolToEmoji() & " - " & $prospect.duels.wins & ":crown: " & $round(prospect.duels.wlr, 2) & ":crossed_swords:"
         )
       ]
-    )
-    echo "sending results for " & query
-    discard await bot.api.sendMessage(m.channel_id, embed=some(embed))
+      if prospect.guild:
+        fields.add(
+          EmbedField(
+            name: "Weekly GEXP",
+           value: prospect.meetsWeeklyGexp().boolToEmoji() & " - " & $prospect.gexp & ":sparkles:"
+          )
+        )
+      embed.fields = some(fields)
+      discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(embed))
 
-    if inMinutes(now() - last_cache_init) > 30:
+    if inMinutes(now() - last_cache_init) > 60:
       echo "clearing cache"
-      cache = initTable[string, Stats]()
+      cache = initTable[string, Prospect]()
+    
 
 waitFor bot.startSession()

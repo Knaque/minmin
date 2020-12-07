@@ -9,3 +9,4 @@ const
   
   DUELS_WINS*    = 1750
   DUELS_WLR*     = 1
+  WEEKLY_GEXP*   = 50000
