@@ -103,26 +103,26 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       var fields = @[
         EmbedField(
           name: "Network Level",
-          value: prospect.meetsNetwork().boolToEmoji() & " - " & $round(prospect.network_level, 2) & ":earth_asia:"
+          value: prospect.meetsNetwork().boolToEmoji() & " - " & round(prospect.network_level, 2).pretty() & ":earth_asia:"
         ),
         EmbedField(
           name: "Skywars",
-          value: prospect.meetsSkywars().boolToEmoji() & " - " & $prospect.skywars.star & ":star: " & $round(prospect.skywars.kdr, 2) & ":crossed_swords:"
+          value: prospect.meetsSkywars().boolToEmoji() & " - " & prospect.skywars.star.pretty() & ":star: " & round(prospect.skywars.kdr, 2).pretty() & ":crossed_swords:"
         ),
         EmbedField(
           name: "Bedwars",
-          value: prospect.meetsBedwars().boolToEmoji() & " - " & $prospect.bedwars.star & ":star: " & $round(prospect.bedwars.fkdr, 2) & ":crossed_swords:"
+          value: prospect.meetsBedwars().boolToEmoji() & " - " & prospect.bedwars.star.pretty() & ":star: " & round(prospect.bedwars.fkdr, 2).pretty() & ":crossed_swords:"
         ),
         EmbedField(
           name: "Duels",
-          value: prospect.meetsDuels().boolToEmoji() & " - " & $prospect.duels.wins & ":crown: " & $round(prospect.duels.wlr, 2) & ":crossed_swords:"
+          value: prospect.meetsDuels().boolToEmoji() & " - " & prospect.duels.wins.pretty() & ":crown: " & round(prospect.duels.wlr, 2).pretty() & ":crossed_swords:"
         )
       ]
       if prospect.guild:
         fields.add(
           EmbedField(
             name: "Weekly GEXP",
-           value: prospect.meetsWeeklyGexp().boolToEmoji() & " - " & $prospect.gexp & ":sparkles:"
+           value: prospect.meetsWeeklyGexp().boolToEmoji() & " - " & prospect.gexp.pretty() & ":sparkles:"
           )
         )
       embed.fields = some(fields)

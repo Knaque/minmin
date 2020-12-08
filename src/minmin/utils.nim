@@ -1,5 +1,5 @@
 from dimscord import Embed
-import options
+import options, strutils
 
 proc boolToEmoji*(c: bool): string =
   case c
@@ -14,3 +14,8 @@ proc boolToColor*(c: bool): int =
 proc errorEmbed*(title, description: string): Embed =
   result.title = some(title)
   result.description = some(description)
+
+proc pretty*(x: int): string = ($x).insertSep(',')
+proc pretty*(x: float): string =
+  let (a, b) = (x.`$`.split('.')[0], x.`$`.split('.')[1])
+  return [a.insertSep(','), b].join(".")

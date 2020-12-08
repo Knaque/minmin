@@ -59,5 +59,5 @@ proc getWeeklyGexp*(g: JsonNode, uuid: string): int =
   for member in g["members"].getElems():
     if member["uuid"].getStr() == uuid:
       for _, day in member["expHistory"].pairs:
-        s.add(day.getInt())
+        s.add(day.getInt(0))
   return sum(s)
