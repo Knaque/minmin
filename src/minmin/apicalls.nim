@@ -41,10 +41,6 @@ proc getProspect*(client: AsyncHttpClient, uuid: string): Future[Option[Prospect
   prospect.bedwars.fkdr = stats.getBedwarsFkdr()
   prospect.duels.wins = stats.getDuelsWins()
   prospect.duels.wlr = stats.getDuelsWlr()
-  if $guild == "null":
-    prospect.guild = false
-  else:
-    prospect.guild = true
-    prospect.gexp = guild.getWeeklyGexp(uuid)
+  (prospect.guild, prospect.gexp) = guild.getGexpInfo(uuid)
 
   return some(prospect)

@@ -1,4 +1,4 @@
-import leveling, json, math
+import leveling, json, math, times, strutils
 
 proc getNetworkLevel*(stats: JsonNode): float =
   var networkExp = 0.0
@@ -54,10 +54,15 @@ proc getDuelsWlr*(stats: JsonNode): float =
 proc getDisplayname*(stats: JsonNode): string =
   stats["displayname"].getStr()
 
-proc getWeeklyGexp*(g: JsonNode, uuid: string): int =
+proc getGexpInfo*(g: JsonNode, uuid: string): tuple[state: bool, sum: int] =
+  if $g == "null": return (false, 0)
+
+  var state = false
   var s: seq[int]
   for member in g["members"].getElems():
     if member["uuid"].getStr() == uuid:
+      if inDays(now() - member["joined"].getInt().`$`[0..9].parseInt().fromUnix().local()) > 6: state = true
       for _, day in member["expHistory"].pairs:
         s.add(day.getInt(0))
-  return sum(s)
+      break
+  return (state, sum(s))
