@@ -7,8 +7,6 @@ if token == "":
 
 var bot = newDiscordClient(token)
 
-var client = newAsyncHttpClient()
-
 var
   cache = initTable[string, Prospect]()
   last_cache_init = now()
@@ -20,6 +18,8 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
   if m.author.bot: return
   if m.content.startsWith(".m "):
     var botmsg = await bot.api.sendMessage(m.channel_id, "Working on it...")
+
+    var client = newAsyncHttpClient()
 
     let query = m.content.split()[^1].toLower()
     echo "queried " & query & " by " & m.author.username
