@@ -1,5 +1,5 @@
 from dimscord import Embed
-import options, strutils
+import options, strutils, math
 
 proc boolToEmoji*(c: bool): string =
   case c
@@ -19,3 +19,7 @@ proc pretty*(x: int): string = ($x).insertSep(',')
 proc pretty*(x: float): string =
   let (a, b) = (x.`$`.split('.')[0], x.`$`.split('.')[1])
   return [a.insertSep(','), b].join(".")
+
+proc roundDown*(n: float, decimals: Positive = 1): float = 
+  let multiplier = 10 ^ decimals
+  return floor(n * multiplier.toFloat) / multiplier.toFloat

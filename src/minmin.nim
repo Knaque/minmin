@@ -1,4 +1,4 @@
-import dimscord, asyncdispatch, strutils, options, httpclient, tables, times, math
+import dimscord, asyncdispatch, strutils, options, httpclient, tables, times
 import minmin/[apicalls, utils, prospect]
 
 const token {.strdefine.}: string = ""
@@ -103,19 +103,19 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       var fields = @[
         EmbedField(
           name: "Network Level",
-          value: prospect.meetsNetwork().boolToEmoji() & " - " & round(prospect.network_level, 2).pretty() & ":earth_asia:"
+          value: prospect.meetsNetwork().boolToEmoji() & " - " & roundDown(prospect.network_level, 2).pretty() & ":earth_asia:"
         ),
         EmbedField(
           name: "Skywars",
-          value: prospect.meetsSkywars().boolToEmoji() & " - " & prospect.skywars.star.pretty() & ":star: " & round(prospect.skywars.kdr, 2).pretty() & ":crossed_swords:"
+          value: prospect.meetsSkywars().boolToEmoji() & " - " & prospect.skywars.star.pretty() & ":star: " & roundDown(prospect.skywars.kdr, 2).pretty() & ":crossed_swords:"
         ),
         EmbedField(
           name: "Bedwars",
-          value: prospect.meetsBedwars().boolToEmoji() & " - " & prospect.bedwars.star.pretty() & ":star: " & round(prospect.bedwars.fkdr, 2).pretty() & ":crossed_swords:"
+          value: prospect.meetsBedwars().boolToEmoji() & " - " & prospect.bedwars.star.pretty() & ":star: " & roundDown(prospect.bedwars.fkdr, 2).pretty() & ":crossed_swords:"
         ),
         EmbedField(
           name: "Duels",
-          value: prospect.meetsDuels().boolToEmoji() & " - " & prospect.duels.wins.pretty() & ":crown: " & round(prospect.duels.wlr, 2).pretty() & ":crossed_swords:"
+          value: prospect.meetsDuels().boolToEmoji() & " - " & prospect.duels.wins.pretty() & ":crown: " & roundDown(prospect.duels.wlr, 2).pretty() & ":crossed_swords:"
         )
       ]
       if prospect.guild:
@@ -131,6 +131,11 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
     if inMinutes(now() - last_cache_init) > 60:
       echo "clearing cache"
       cache = initTable[string, Prospect]()
+      last_cache_init = now()
+  if m.content == ".cc":
+    echo "cache manually cleared by " & m.author.username
+    cache = initTable[string, Prospect]()
+    last_cache_init = now()
     
 
 waitFor bot.startSession()
