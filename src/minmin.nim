@@ -19,6 +19,11 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
   if m.content.startsWith(".m "):
     var botmsg = await bot.api.sendMessage(m.channel_id, "Working on it...")
 
+    if inMinutes(now() - last_cache_init) > 60:
+      echo "clearing cache"
+      cache = initTable[string, Prospect]()
+      last_cache_init = now()
+
     var client = newAsyncHttpClient()
 
     let query = m.content.split()[^1].toLower()
@@ -128,15 +133,10 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       embed.fields = some(fields)
       discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(embed))
 
-    if inMinutes(now() - last_cache_init) > 60:
-      echo "clearing cache"
-      cache = initTable[string, Prospect]()
-      last_cache_init = now()
   if m.content == ".cc":
     discard await bot.api.sendMessage(m.channel_id, "Cache cleared.")
     echo "cache manually cleared by " & m.author.username
     cache = initTable[string, Prospect]()
     last_cache_init = now()
-    
 
 waitFor bot.startSession()
