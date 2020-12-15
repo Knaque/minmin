@@ -133,6 +133,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       cache = initTable[string, Prospect]()
       last_cache_init = now()
   if m.content == ".cc":
+    discard await bot.api.sendMessage(m.channel_id, "Cache cleared.")
     echo "cache manually cleared by " & m.author.username
     cache = initTable[string, Prospect]()
     last_cache_init = now()
