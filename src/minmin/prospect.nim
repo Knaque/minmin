@@ -30,13 +30,16 @@ func meetsDuels*(p: Prospect): bool = p.duels.wins >= DUELS_WINS and p.duels.wlr
 
 func meetsWeeklyGexp*(p: Prospect): bool = p.gexp >= WEEKLY_GEXP
 
+func meetsExceptionGexp*(p: Prospect): bool = p.gexp >= EXCEPTION_GEXP
+
 func meetsAll*(p: Prospect): bool =
   case p.guild
   of true:
     p.meetsNetwork and (
       p.meetsSkywars or
       p.meetsBedwars or
-      p.meetsDuels
+      p.meetsDuels or
+      p.meetsExceptionGexp
     ) and
     p.meetsWeeklyGexp
   of false:

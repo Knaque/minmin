@@ -102,32 +102,32 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       )
       return
     else:
-      let qualifies = prospect.meetsAll()
+      let qualifies = prospect.meetsAll
       embed.title = some(qualifies.boolToEmoji() & " - " & prospect.displayname)
       embed.color = some(qualifies.boolToColor())
       var fields = @[
         EmbedField(
           name: "Network Level",
-          value: prospect.meetsNetwork().boolToEmoji() & " - " & roundDown(prospect.network_level, 2).pretty() & ":earth_asia:"
+          value: prospect.meetsNetwork.boolToEmoji() & " - " & roundDown(prospect.network_level, 2).pretty() & ":earth_asia:"
         ),
         EmbedField(
           name: "Skywars",
-          value: prospect.meetsSkywars().boolToEmoji() & " - " & prospect.skywars.star.pretty() & ":star: " & roundDown(prospect.skywars.kdr, 2).pretty() & ":crossed_swords:"
+          value: prospect.meetsSkywars.boolToEmoji() & " - " & prospect.skywars.star.pretty() & ":star: " & roundDown(prospect.skywars.kdr, 2).pretty() & ":crossed_swords:"
         ),
         EmbedField(
           name: "Bedwars",
-          value: prospect.meetsBedwars().boolToEmoji() & " - " & prospect.bedwars.star.pretty() & ":star: " & roundDown(prospect.bedwars.fkdr, 2).pretty() & ":crossed_swords:"
+          value: prospect.meetsBedwars.boolToEmoji() & " - " & prospect.bedwars.star.pretty() & ":star: " & roundDown(prospect.bedwars.fkdr, 2).pretty() & ":crossed_swords:"
         ),
         EmbedField(
           name: "Duels",
-          value: prospect.meetsDuels().boolToEmoji() & " - " & prospect.duels.wins.pretty() & ":crown: " & roundDown(prospect.duels.wlr, 2).pretty() & ":crossed_swords:"
+          value: prospect.meetsDuels.boolToEmoji() & " - " & prospect.duels.wins.pretty() & ":crown: " & roundDown(prospect.duels.wlr, 2).pretty() & ":crossed_swords:"
         )
       ]
       if prospect.guild:
         fields.add(
           EmbedField(
             name: "Weekly GEXP",
-           value: prospect.meetsWeeklyGexp().boolToEmoji() & " - " & prospect.gexp.pretty() & ":sparkles:"
+           value: (prospect.meetsWeeklyGexp or prospect.meetsExceptionGexp).boolToEmoji() & " - " & prospect.gexp.pretty() & ":sparkles:"
           )
         )
       embed.fields = some(fields)
