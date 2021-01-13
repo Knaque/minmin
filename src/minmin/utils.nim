@@ -23,3 +23,5 @@ proc pretty*(x: float): string =
 proc roundDown*(n: float, decimals: Positive = 1): float = 
   let multiplier = 10 ^ decimals
   return floor(n * multiplier.toFloat) / multiplier.toFloat
+
+func escapeUnderscores*(s: string): string {.inline.} = s.replace("_", "\\_")

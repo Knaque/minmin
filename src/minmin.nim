@@ -103,7 +103,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       return
     else:
       let qualifies = prospect.meetsAll
-      embed.title = some(qualifies.boolToEmoji() & " - " & prospect.displayname)
+      embed.title = some(qualifies.boolToEmoji() & " - " & prospect.displayname.escapeUnderscores())
       embed.color = some(qualifies.boolToColor())
       var fields = @[
         EmbedField(
