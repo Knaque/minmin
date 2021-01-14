@@ -12,3 +12,4 @@ bin           = @["minmin"]
 
 requires "nim >= 1.4.0"
 requires "dimscord >= 1.2.1"
+requires "regex >= 0.19.0"

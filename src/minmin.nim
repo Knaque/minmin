@@ -1,4 +1,4 @@
-import dimscord, asyncdispatch, strutils, options, httpclient, tables, times
+import dimscord, asyncdispatch, strutils, options, httpclient, tables, times, regex
 import minmin/[apicalls, utils, prospect]
 
 const token {.strdefine.}: string = ""
@@ -26,8 +26,19 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
 
     var client = newAsyncHttpClient()
 
-    let query = m.content.split()[^1].toLower()
+    let query = m.content.split()[^1].toLower().replace("\\", "")
     echo "queried " & query & " by " & m.author.username
+
+    if not query.match(re"^[a-zA-Z1-9_]{1,16}$"):
+      discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
+        errorEmbed(
+          "Invalid username.",
+          "You might have made a typo."
+          )
+        )
+      )
+      return
+
     var prospect: Prospect
     prospect.exists = true
     prospect.hypixel = true
