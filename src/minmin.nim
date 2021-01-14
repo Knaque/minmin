@@ -29,7 +29,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
     let query = m.content.split()[^1].toLower().replace("\\", "")
     echo "queried " & query & " by " & m.author.username
 
-    if not query.match(re"^[a-zA-Z1-9_]{1,16}$"):
+    if not query.match(re"^[a-zA-Z0-9_]{1,16}$"):
       discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
         errorEmbed(
           "Invalid username.",
