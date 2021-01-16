@@ -11,7 +11,7 @@ var bot = newDiscordClient(token)
 var
   cache = initTable[string, Prospect]()
   last_cache_init = now()
-  last_checkall = now() - 200.seconds
+  last_checkall = now() - 5.minutes
 
 bot.events.on_ready = proc (s: Shard, r: Ready) {.async.} =
   echo "Ready to rumble!"
@@ -141,7 +141,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(embed))
 
   if m.content == ".a":
-    if inSeconds(now() - last_checkall) < 180:
+    if inMinutes(now() - last_checkall) < 5:
       discard await bot.api.sendMessage(m.channel_id, "Please wait before using this command again!")
       return
     last_checkall = now()
@@ -165,6 +165,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       var prospect: Prospect
       prospect.exists = true
       prospect.hypixel = true
+      var found_in_cache = false
       var query: string
       try:
         query = await client.getUsername(uuid)
@@ -183,6 +184,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       if cache.hasKey(query):
         echo "found " & query & " in cache"
         prospect = cache[query]
+        found_in_cache = true
       else:
         echo query & " not found in cache, getting stats"
         var stats: Option[Prospect]
@@ -205,8 +207,9 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       if not prospect.meetsAll():
         unqualified.add prospect.displayname.escapeUnderscores()
 
-      echo "sleepAsync to avoid throttling"
-      await sleepAsync(750)
+      if not found_in_cache:
+        echo "sleepAsync to avoid throttling"
+        await sleepAsync(750)
 
     embed.description = some(unqualified.join("\n"))
     discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(embed))
