@@ -168,6 +168,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       var query: string
       try:
         query = await client.getUsername(uuid)
+        query = query.toLower()
       except Exception as e:
         echo "/!\\ got exception ", repr(e), " with message ", e.msg
         discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
