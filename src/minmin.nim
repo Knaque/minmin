@@ -146,7 +146,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       return
     last_checkall = now()
 
-    var botmsg = await bot.api.sendMessage(m.channel_id, "Working on it... Sit tight, this is going to take about 2 minutes.")
+    var botmsg = await bot.api.sendMessage(m.channel_id, "Working on it... Sit tight, this is going to take a while.")
 
     if inMinutes(now() - last_cache_init) > 60:
       echo "clearing cache"
@@ -205,7 +205,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
         unqualified.add prospect.displayname
 
       echo "sleepAsync to avoid throttling"
-      await sleepAsync(500)
+      await sleepAsync(750)
 
     embed.description = some(unqualified.join("\n"))
     discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(embed))
