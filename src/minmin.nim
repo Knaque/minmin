@@ -202,7 +202,7 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
         cache[query] = prospect
       
       if not prospect.meetsAll():
-        unqualified.add prospect.displayname
+        unqualified.add prospect.displayname.escapeUnderscores()
 
       echo "sleepAsync to avoid throttling"
       await sleepAsync(750)
