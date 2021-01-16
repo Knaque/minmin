@@ -1,5 +1,6 @@
 import dimscord, asyncdispatch, strutils, options, httpclient, tables, times, regex
 import minmin/[apicalls, utils, prospect]
+from os import sleep
 
 const token {.strdefine.}: string = ""
 if token == "":
@@ -10,6 +11,7 @@ var bot = newDiscordClient(token)
 var
   cache = initTable[string, Prospect]()
   last_cache_init = now()
+  last_checkall = now() - 200.seconds
 
 bot.events.on_ready = proc (s: Shard, r: Ready) {.async.} =
   echo "Ready to rumble!"
@@ -52,11 +54,8 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       var uuid: Option[string]
       try:
         uuid = await client.getUuid(query)
-      except:
-        let
-          e = getCurrentException()
-          msg = getCurrentExceptionMsg()
-        echo "/!\\ got exception ", repr(e), " with message ", msg
+      except Exception as e:
+        echo "/!\\ got exception ", repr(e), " with message ", e.msg
         discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
           errorEmbed(
             "Something went wrong",
@@ -73,11 +72,8 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
         var stats: Option[Prospect]
         try:
           stats = await client.getProspect(uuid.get())
-        except:
-          let
-            e = getCurrentException()
-            msg = getCurrentExceptionMsg()
-          echo "/!\\ got exception ", repr(e), " with message ", msg
+        except Exception as e:
+          echo "/!\\ got exception ", repr(e), " with message ", e.msg
           discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
             errorEmbed(
               "Something went wrong",
@@ -144,7 +140,78 @@ bot.events.message_create = proc (s: Shard, m: Message) {.async.} =
       embed.fields = some(fields)
       discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(embed))
 
-  if m.content == ".cc":
+  if m.content == ".a":
+    if inSeconds(now() - last_checkall) < 180:
+      discard await bot.api.sendMessage(m.channel_id, "Please wait before using this command again!")
+      return
+    last_checkall = now()
+
+    var botmsg = await bot.api.sendMessage(m.channel_id, "Working on it... Sit tight, this is going to take about 2 minutes.")
+
+    if inMinutes(now() - last_cache_init) > 60:
+      echo "clearing cache"
+      cache = initTable[string, Prospect]()
+      last_cache_init = now()
+
+    echo "checkall requested by " & m.author.username
+    var embed: Embed
+    embed.title = some("Players that **don't** meet requirements:")
+    embed.color = some(15158332)
+    var unqualified: seq[string]
+
+    var client = newAsyncHttpClient()
+    let members = await client.getGuildMembers("250ms")
+    for uuid in members:
+      var prospect: Prospect
+      prospect.exists = true
+      prospect.hypixel = true
+      var query: string
+      try:
+        query = await client.getUsername(uuid)
+      except Exception as e:
+        echo "/!\\ got exception ", repr(e), " with message ", e.msg
+        discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
+          errorEmbed(
+            "Something went wrong",
+            "Try again later."
+            )
+          )
+        )
+        return
+
+      if cache.hasKey(query):
+        echo "found " & query & " in cache"
+        prospect = cache[query]
+      else:
+        echo query & " not found in cache, getting stats"
+        var stats: Option[Prospect]
+        try:
+          stats = await client.getProspect(uuid)
+        except Exception as e:
+          echo "/!\\ got exception ", repr(e), " with message ", e.msg
+          discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(
+            errorEmbed(
+              "Something went wrong",
+              "Try again later."
+              )
+            )
+          )
+          return
+        prospect = stats.get()
+        echo "storing " & query & " in cache"
+        cache[query] = prospect
+      
+      if not prospect.meetsAll():
+        unqualified.add prospect.displayname
+
+      echo "sleepAsync to avoid throttling"
+      await sleepAsync(500)
+
+    embed.description = some(unqualified.join("\n"))
+    discard await bot.api.editMessage(m.channel_id, botmsg.id, embed=some(embed))
+    echo "Whew, finally done!"
+
+  if m.content == ".c":
     discard await bot.api.sendMessage(m.channel_id, "Cache cleared.")
     echo "cache manually cleared by " & m.author.username
     cache = initTable[string, Prospect]()

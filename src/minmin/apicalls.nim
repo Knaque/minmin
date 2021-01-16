@@ -44,3 +44,26 @@ proc getProspect*(client: AsyncHttpClient, uuid: string): Future[Option[Prospect
   (prospect.guild, prospect.gexp) = guild.getGexpInfo(uuid)
 
   return some(prospect)
+
+proc getGuildMembers*(client: AsyncHttpClient, guild: string): Future[seq[string]] {.async.} =
+  #! Doesn't work with spaces! This is okay for now.
+  let guilddata = await client.get(
+    fmt"https://api.hypixel.net/guild?key={key}&name={guild}"
+  )
+  let body = await guilddata.body
+  let members = body.parseJson()["guild"]["members"]
+
+  var uuids: seq[string]
+  for member in members:
+    uuids.add member["uuid"].getStr()
+  
+  return uuids
+
+proc getUsername*(client: AsyncHttpClient, uuid: string): Future[string] {.async.} =
+  #! Doesn't account for invalid uuids... Okay for now.
+  let response = await client.get(
+    fmt"https://api.mojang.com/user/profiles/{uuid}/names"
+  )
+  let body = await response.body
+  for n in body.parseJson():
+    result = n["name"].getStr()
