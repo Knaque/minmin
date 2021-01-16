@@ -21,9 +21,20 @@ proc getProspect*(client: AsyncHttpClient, uuid: string): Future[Option[Prospect
     fmt"https://api.hypixel.net/guild?key={key}&player={uuid}"
   )
   let playerbody = await playerdata.body
-  let stats = playerbody.parseJson()["player"]
+  var stats: JsonNode
+  try:
+    stats = playerbody.parseJson()["player"]
+  except Exception as e:
+    echo playerbody
+    raise newException(Exception, e.msg)
+
   let guildbody = await guilddata.body
-  let guild = guildbody.parseJson()["guild"]
+  var guild: JsonNode
+  try:
+    guild = guildbody.parseJson()["guild"]
+  except Exception as e:
+    echo guildbody
+    raise newException(Exception, e.msg)
 
   var prospect: Prospect
 
