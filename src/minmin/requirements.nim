@@ -7,7 +7,7 @@ const
   SKYWARS_STAR*   = 13
   SKYWARS_KDR*    = 1
   
-  DUELS_WINS*     = 1_750
+  DUELS_WINS*     = 2_000
   DUELS_WLR*      = 1
 
   WEEKLY_GEXP*    = 50_000
